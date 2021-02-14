@@ -1,2 +1,2 @@
 # BinTyper
-This repository is about BinTyper project.
+A repository for 'BinTyper: Type Confusion Detection for C++ Binaries' project.
