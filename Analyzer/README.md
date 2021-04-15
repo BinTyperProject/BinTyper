@@ -2,7 +2,7 @@
 This IDAPython scripts analyzes the target binary and generates class information files.
 
 # Requirements
-- IDA 7.5
+- IDA 7.3
 
 # Usage
 Open a target binary and load the python script named `main.py` by IDAPython. Since It may takes **REALLY LONG** time to generate all results (Poor optimization + Single thread).

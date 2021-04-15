@@ -262,6 +262,7 @@ void ExamineAccessedArea(UINT64 ins_ea, UINT64 mem_addr, UINT32 size, AccessType
     auto offset = mem_addr - ref_vft;
     ADDRINT vft = *(ADDRINT*)ref_vft - process_image_base;
     auto vft_result = vft_set.find(vft);
+    // *out << (void*)vft << "\n";
     if (vft_result == vft_set.end()) return;
     // *out << "VFT ACCESS : " << (void*)vft << endl;
 
@@ -271,11 +272,13 @@ void ExamineAccessedArea(UINT64 ins_ea, UINT64 mem_addr, UINT32 size, AccessType
         *out << "Error on load area layout information" << endl;
         exit(1);
     }
-    auto area_layout_result = area_layout_information.find(vft);
+    auto area_layout_result = area_layout_information.find(vft-16);
     if (area_layout_result == area_layout_information.end()) return;
     auto area_layout = (*area_layout_result).second;
     auto sub_area_result = area_layout.find(offset);
+    // *out << "OFFSET : " << (void*)offset << endl;
     if (sub_area_result == area_layout.end()) return;
+    // *out << "OFFSET SUCCESS" << endl;
     auto sub_area = (*sub_area_result).second;
     // *out << "HELLO " << (void*)sub_area << endl;
 

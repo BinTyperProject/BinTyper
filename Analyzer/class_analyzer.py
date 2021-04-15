@@ -42,7 +42,7 @@ def GetROSections():
         seg_start_ea = idc.SegStart(seg)
         seg_end_ea = idc.SegEnd(seg)
         flags = idc.GetSegmentAttr(seg, idc.SEGATTR_PERM)
-        if flags & 4: # Flags 4 means read-only
+        if flags & 6: # Flags 4 means read-only
             seg_addrs_readonly.append([seg_start_ea, seg_end_ea])
     return seg_addrs_readonly
 
@@ -93,15 +93,26 @@ def GetAllVfts():
             rtti_val += reloc_dict[moved_imm - (8 * 1)]
         if rtti_val != 0:
             # Bad RTTI
-            saved_imms.remove(moved_imm)
-            continue
+            # print("Bad RTTI", "%08x" % moved_imm)
+            # saved_imms.remove(moved_imm)
+            # continue
+            pass
         if offset_to_top % 8 != 0:
             # Bad OffsetToTop
-            saved_imms.remove(moved_imm)
-            continue
+            # print("Bad OffsetToTop1", "%08x" % moved_imm)
+            # saved_imms.remove(moved_imm)
+            # continue
+            pass
 
         if not (0xFFFFFFFFFFFF0000 < offset_to_top or offset_to_top == 0):
             # Bad OffsetToTop range
+            # print("Bad OffsetToTop2", "%08x" % moved_imm)
+            # saved_imms.remove(moved_imm)
+            # continue
+            pass
+        
+        if idc.Qword(moved_imm) != 0:
+            print("Bad OffsetToTop3", "%08x" % moved_imm)
             saved_imms.remove(moved_imm)
             continue
     moved_imms = saved_imms[:]
@@ -117,31 +128,36 @@ def GetAllVfts():
     for idx in range(len(moved_imms)):
         cur_vfuncs = []
         if idx + 1 < len(moved_imms):
-            offset_limit = moved_imms[idx + 1] - 8*2
+            offset_limit = moved_imms[idx + 1]
         else:
             offset_limit = 0xFFFFFFFFFFFFFFFF
         vft_offset = moved_imms[idx]
-        vptr_cur_offset = moved_imms[idx]
+        vptr_cur_offset = moved_imms[idx] + 16
         while vptr_cur_offset < offset_limit:
-            if vft_offset != vptr_cur_offset and len(list(idautils.XrefsTo(vptr_cur_offset))):
+            print("brrr ", "%08x" % vptr_cur_offset, "%08x" % offset_limit)
+            if vft_offset+16 != vptr_cur_offset and len(list(idautils.XrefsTo(vptr_cur_offset))):
                 # xref exists => area for vptr ends
                 break
             maybe_func_ptr = idc.Qword(vptr_cur_offset)
             if vptr_cur_offset in reloc_dict.keys():
-                maybe_func_ptr += reloc_dict[vptr_cur_offset] # Handle reloc
+                print("ORG %08x" % maybe_func_ptr, "RELOC %08x" % reloc_dict[vptr_cur_offset])
+                # maybe_func_ptr += reloc_dict[vptr_cur_offset] # Handle reloc
+            print("%08x" % maybe_func_ptr)
             if maybe_func_ptr == 0:
                 # It is pure function call: Not-implemented-yet-virtual-method 
                 # TODO: Does we have to deal with pure class?
-                break # We do not work for pure function.
+                pass # We do not work for pure function.
             elif maybe_func_ptr in function_list:
                 cur_vfuncs.append(maybe_func_ptr)
+                print("boliar")
             else:
                 break
             vptr_cur_offset += 8
 
         last_offsettotop = 0
         if len(cur_vfuncs):
-            offset_to_top = idc.Qword(vft_offset - (8 * 2))
+            # offset_to_top = idc.Qword(vft_offset - (8 * 2))
+            offset_to_top = idc.Qword(vft_offset)
             offset_to_top = GetSignedNumber(offset_to_top, 64)
             if offset_to_top == 0:
                 last_offsettotop = 0
